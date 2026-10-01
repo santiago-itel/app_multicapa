@@ -1,0 +1,21 @@
+services:
+  frontend:
+    build: ./frontend
+    container_name: app_frontend_${APELLIDO_ALUMNO}
+    ports:
+      - "${PUERTO_FRONT}:80"
+    networks:
+      - red_publica
+  
+  backend_api:
+    build: ./backend
+    # Sin container_name explícito para permitir escalado horizontal (--scale)
+    networks:
+      - red_publica
+      - red_privada
+
+networks:
+  red_publica:
+    driver: bridge
+  red_privada:
+    driver: bridge
