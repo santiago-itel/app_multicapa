@@ -1,0 +1,44 @@
+stages:
+  - validar
+  - construir
+  - desplegar
+
+default:
+  image: docker:27
+  services:
+    - docker:27-dind
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+
+validar_compose:
+  stage: validar
+  script:
+    - docker compose config -q
+
+construir_imagenes:
+  stage: construir
+  parallel:
+    matrix:
+      - SERVICIO: [ backend, frontend ]
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/$SERVICIO:$CI_COMMIT_SHORT_SHA" -t "$CI_REGISTRY_IMAGE/$SERVICIO:latest" "./$SERVICIO"
+    - docker push --all-tags "$CI_REGISTRY_IMAGE/$SERVICIO"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+desplegar_vm:
+  stage: desplegar
+  image: alpine:3.20
+  services: []
+  before_script:
+    - apk add --no-cache openssh-client
+    - install -m 600 /dev/null key
+    - echo "$SSH_PRIVATE_KEY" > key
+  script:
+    - ssh -i key -o StrictHostKeyChecking=accept-new "$SSH_USER@$SSH_HOST" "cd ~/app_multicapa && git pull && docker compose up -d --build"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
