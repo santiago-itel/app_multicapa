@@ -44,21 +44,4 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           tags: |
             ${{ env.IMAGE_BASE }}/${{ matrix.servicio }}:latest
-            ${{ env.IMAGE_BASE }}/${{ matrix.servicio }}:${{ github.com }}
-
-  deploy:
-    needs: build
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    environment: produccion
-    steps:
-      - name: Desplegar en la VM por SSH
-        env:
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-        run: |
-          install -m 600 /dev/null key
-          echo "$SSH_KEY" > key
-          ssh -i key -o StrictHostKeyChecking=accept-new "$SSH_USER@$SSH_HOST" \
-            "cd ~/app-multicapa && git pull && docker compose up -d --build"
+            ${{ env.IMAGE_BASE }}/${{ matrix.servicio }}:${{ github.sha }}
