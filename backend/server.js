@@ -34,7 +34,7 @@ app.post('/api/notas', (req, res) => {
 
 app.delete('/api/notas/:id', (req, res) => {
   const { id } = req.params;
-  notas = notas.filter(n => n.id 1= id);
+  notas = notas.filter(n => n.id != id);
   res.json({ message: 'Nota eliminada', container: CONTAINER_ID });
 });
 
